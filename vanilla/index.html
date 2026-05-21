@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="bs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Studentski planer obaveza - Vanilla JS</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="intro-panel">
+        <p class="eyebrow">Vanilla HTML, CSS i JavaScript</p>
+        <h1>Studentski planer obaveza</h1>
+        <p class="intro-copy">
+          Primjer aplikacije u kojoj se DOM elementi, filtriranje i stanje aplikacije
+          upravljaju rucno kroz JavaScript.
+        </p>
+
+        <div class="stats-grid" aria-label="Statistika obaveza">
+          <article class="stat-card">
+            <span id="totalTasks">0</span>
+            <small>Ukupno</small>
+          </article>
+          <article class="stat-card">
+            <span id="openTasks">0</span>
+            <small>Aktivno</small>
+          </article>
+          <article class="stat-card">
+            <span id="doneTasks">0</span>
+            <small>Zavrseno</small>
+          </article>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <form id="taskForm" class="task-form">
+          <div class="form-row">
+            <label for="title">Naziv obaveze</label>
+            <input id="title" name="title" type="text" placeholder="Npr. Zavrsiti seminarski rad" required />
+          </div>
+
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="subject">Predmet</label>
+              <input id="subject" name="subject" type="text" placeholder="Npr. Web programiranje" required />
+            </div>
+
+            <div class="form-row">
+              <label for="deadline">Rok</label>
+              <input id="deadline" name="deadline" type="date" required />
+            </div>
+
+            <div class="form-row">
+              <label for="priority">Prioritet</label>
+              <select id="priority" name="priority">
+                <option value="high">Visok</option>
+                <option value="medium">Srednji</option>
+                <option value="low">Nizak</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="primary-button" type="submit">Dodaj obavezu</button>
+        </form>
+
+        <div class="toolbar" aria-label="Filteri">
+          <button class="filter-button active" data-filter="all" type="button">Sve</button>
+          <button class="filter-button" data-filter="open" type="button">Aktivne</button>
+          <button class="filter-button" data-filter="done" type="button">Zavrsene</button>
+          <button class="filter-button" data-filter="high" type="button">Visok prioritet</button>
+        </div>
+
+        <section class="task-list" id="taskList" aria-live="polite"></section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
+
