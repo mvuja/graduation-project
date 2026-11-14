@@ -1,30 +1,86 @@
 import { useMemo, useState } from "react";
 
 const STORAGE_KEY = "student-planner-react";
+const categoryLabels = {
+  none: "Bez kategorije",
+  exam: "Ispit",
+  assignment: "Zadaća",
+  project: "Projekat",
+};
+
+const initialForm = { title: "", subject: "", deadline: "", priority: "high", category: "none" };
 
 const initialTasks = [
   {
     id: crypto.randomUUID(),
     title: "Pripremiti prezentaciju za diplomski",
-    subject: "Frontend frameworki",
-    deadline: "2026-06-05",
+    subject: "Frontend razvoj",
+    deadline: "2026-11-25",
     priority: "high",
+    category: "project",
     done: false,
   },
   {
     id: crypto.randomUUID(),
     title: "Procitati literaturu o React komponentama",
     subject: "Web development",
-    deadline: "2026-05-28",
+    deadline: "2026-11-18",
     priority: "medium",
+    category: "exam",
     done: false,
   },
   {
     id: crypto.randomUUID(),
-    title: "Srediti biljeske za poglavlje o CSS frameworkima",
+    title: "Srediti biljeske o CSS-u",
     subject: "Frontend osnove",
-    deadline: "2026-05-24",
+    deadline: "2026-11-16",
     priority: "low",
+    category: "none",
+    done: true,
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Pripremiti kolokvij iz baza podataka",
+    subject: "Baze podataka",
+    deadline: "2026-11-20",
+    priority: "high",
+    category: "exam",
+    done: false,
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Predati zadacu iz algoritama",
+    subject: "Algoritmi i strukture podataka",
+    deadline: "2026-11-19",
+    priority: "medium",
+    category: "assignment",
+    done: false,
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Zavrsiti prototip studentskog portala",
+    subject: "Softversko inzenjerstvo",
+    deadline: "2026-11-27",
+    priority: "high",
+    category: "project",
+    done: false,
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Poslati prijavu za praksu",
+    subject: "Strucna praksa",
+    deadline: "2026-11-21",
+    priority: "low",
+    category: "none",
+    done: false,
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Predati izvjestaj s laboratorijske vjezbe",
+    subject: "Racunarske mreze",
+    deadline: "2026-11-15",
+    priority: "medium",
+    category: "assignment",
     done: true,
   },
 ];
@@ -39,6 +95,7 @@ const filters = [
 export default function App() {
   const [tasks, setTasks] = useLocalStorage(STORAGE_KEY, initialTasks);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [activeCategory, setActiveCategory] = useState("all");
 
   const stats = useMemo(
     () => ({
@@ -49,7 +106,10 @@ export default function App() {
     [tasks],
   );
 
-  const visibleTasks = useMemo(() => filterTasks(tasks, activeFilter), [tasks, activeFilter]);
+  const visibleTasks = useMemo(
+    () => filterTasks(tasks, activeFilter, activeCategory),
+    [tasks, activeFilter, activeCategory],
+  );
 
   function addTask(task) {
     setTasks([{ id: crypto.randomUUID(), done: false, ...task }, ...tasks]);
@@ -69,7 +129,12 @@ export default function App() {
 
       <section className="workspace">
         <TaskForm onAddTask={addTask} />
-        <FilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+        <FilterBar
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+        />
         <TaskList tasks={visibleTasks} onToggleTask={toggleTask} onDeleteTask={deleteTask} />
       </section>
     </main>
@@ -79,11 +144,10 @@ export default function App() {
 function IntroPanel({ stats }) {
   return (
     <section className="intro-panel">
-      <p className="eyebrow">React komponentni pristup</p>
+      <p className="eyebrow">React</p>
       <h1>Studentski planer obaveza</h1>
       <p className="intro-copy">
-        Ista aplikacija je podijeljena na manje komponente koje upravljaju svojim dijelom
-        interfejsa, dok React osvjezava prikaz nakon svake promjene stanja.
+        Organizuj studentske obaveze, prati rokove i odredi prioritete na jednom mjestu.
       </p>
 
       <div className="stats-grid" aria-label="Statistika obaveza">
@@ -105,12 +169,7 @@ function StatCard({ value, label }) {
 }
 
 function TaskForm({ onAddTask }) {
-  const [form, setForm] = useState({
-    title: "",
-    subject: "",
-    deadline: "",
-    priority: "high",
-  });
+  const [form, setForm] = useState(initialForm);
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -124,9 +183,10 @@ function TaskForm({ onAddTask }) {
       subject: form.subject.trim(),
       deadline: form.deadline,
       priority: form.priority,
+      category: getCategory(form.category),
     });
 
-    setForm({ title: "", subject: "", deadline: "", priority: "high" });
+    setForm(initialForm);
   }
 
   return (
@@ -178,6 +238,15 @@ function TaskForm({ onAddTask }) {
             <option value="low">Nizak</option>
           </select>
         </div>
+
+        <div className="form-row">
+          <label htmlFor="category">Kategorija</label>
+          <select id="category" name="category" value={form.category} onChange={updateField}>
+            {Object.entries(categoryLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <button className="primary-button" type="submit">
@@ -187,20 +256,31 @@ function TaskForm({ onAddTask }) {
   );
 }
 
-function FilterBar({ activeFilter, onFilterChange }) {
+function FilterBar({ activeFilter, onFilterChange, activeCategory, onCategoryChange }) {
   return (
-    <div className="toolbar" aria-label="Filteri">
-      {filters.map((filter) => (
-        <button
-          className={`filter-button ${activeFilter === filter.value ? "active" : ""}`}
-          key={filter.value}
-          onClick={() => onFilterChange(filter.value)}
-          type="button"
-        >
-          {filter.label}
-        </button>
-      ))}
-    </div>
+    <>
+      <div className="toolbar" aria-label="Filteri">
+        {filters.map((filter) => (
+          <button
+            className={`filter-button ${activeFilter === filter.value ? "active" : ""}`}
+            key={filter.value}
+            onClick={() => onFilterChange(filter.value)}
+            type="button"
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+      <div className="form-row category-filter">
+        <label htmlFor="categoryFilter">Filtriraj po kategoriji</label>
+        <select id="categoryFilter" value={activeCategory} onChange={(event) => onCategoryChange(event.target.value)}>
+          <option value="all">Sve kategorije</option>
+          {Object.entries(categoryLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+      </div>
+    </>
   );
 }
 
@@ -225,6 +305,7 @@ function TaskCard({ task, onToggleTask, onDeleteTask }) {
         <h2 className="task-title">{task.title}</h2>
         <div className="task-meta">
           <span className="badge">{task.subject}</span>
+          <span className="badge">{categoryLabels[getCategory(task.category)]}</span>
           <span className="badge">{formatPriority(task.priority)}</span>
           <span className="badge">Rok: {formatDate(task.deadline)}</span>
           <span className="badge">{task.done ? "Zavrseno" : "Aktivno"}</span>
@@ -244,10 +325,7 @@ function TaskCard({ task, onToggleTask, onDeleteTask }) {
 }
 
 function useLocalStorage(key, fallbackValue) {
-  const [value, setValue] = useState(() => {
-    const storedValue = localStorage.getItem(key);
-    return storedValue ? JSON.parse(storedValue) : fallbackValue;
-  });
+  const [value, setValue] = useState(() => loadTasks(key, fallbackValue));
 
   function updateValue(nextValue) {
     setValue(nextValue);
@@ -257,20 +335,46 @@ function useLocalStorage(key, fallbackValue) {
   return [value, updateValue];
 }
 
-function filterTasks(tasks, activeFilter) {
-  if (activeFilter === "open") {
-    return tasks.filter((task) => !task.done);
-  }
+function loadTasks(key, initialTasks) {
+  const storedTasks = localStorage.getItem(key);
+  const savedTasks = storedTasks ? JSON.parse(storedTasks) : initialTasks;
+  const demoKey = `${key}-demo-initialized`;
+  if (localStorage.getItem(demoKey)) return savedTasks;
 
-  if (activeFilter === "done") {
-    return tasks.filter((task) => task.done);
-  }
+  const categories = Object.keys(categoryLabels);
+  const categorizedTasks = savedTasks.map((task) => (
+    Object.hasOwn(categoryLabels, task.category)
+      ? task
+      : { ...task, category: categories[Math.floor(Math.random() * categories.length)] }
+  ));
+  const savedTitles = new Set(categorizedTasks.map((task) => (
+    task.title === "Srediti biljeske za poglavlje o CSS frameworkima"
+      ? "Srediti biljeske o CSS-u"
+      : task.title
+  )));
+  const examples = initialTasks.filter((task) => !savedTitles.has(task.title));
+  const result = [...categorizedTasks, ...examples];
 
-  if (activeFilter === "high") {
-    return tasks.filter((task) => task.priority === "high");
-  }
+  localStorage.setItem(key, JSON.stringify(result));
+  localStorage.setItem(demoKey, "true");
+  return result;
+}
 
-  return tasks;
+function filterTasks(tasks, activeFilter, activeCategory) {
+  return tasks.filter((task) => {
+    if (activeCategory !== "all" && getCategory(task.category) !== activeCategory) {
+      return false;
+    }
+
+    if (activeFilter === "open") return !task.done;
+    if (activeFilter === "done") return task.done;
+    if (activeFilter === "high") return task.priority === "high";
+    return true;
+  });
+}
+
+function getCategory(value) {
+  return Object.hasOwn(categoryLabels, value) ? value : "none";
 }
 
 function formatPriority(priority) {
