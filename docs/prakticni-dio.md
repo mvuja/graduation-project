@@ -35,16 +35,33 @@ Kod ove verzije posebno se uocava potreba za rucnim:
 
 ## React verzija
 
-U drugoj verziji aplikacija je implementirana pomocu React framework/biblioteke pristupa. Aplikacija je razdvojena na vise komponenti:
+Druga verzija koristi React biblioteku. `App.jsx` sastavlja ekran, dok su komponente i logika planera organizovane unutar modula `features/planner`.
 
-- `IntroPanel`
-- `StatCard`
-- `TaskForm`
-- `FilterBar`
-- `TaskList`
-- `TaskCard`
+~~~text
+react/src/
+  main.jsx
+  App.jsx
+  styles.css
+  features/planner/
+    components/
+      IntroPanel.jsx
+      StatCard.jsx
+      TaskForm.jsx
+      FilterBar.jsx
+      CategorySelect.jsx
+      TaskList.jsx
+      TaskCard.jsx
+    usePlanner.js
+    taskModel.js
+    taskStorage.js
+    demoTasks.js
+~~~
 
-Ovakva struktura omogucava da svaki dio interfejsa ima jasnu odgovornost. Promjene u podacima se cuvaju u stanju aplikacije, a React automatski osvjezava prikaz kada se stanje promijeni.
+`TaskForm` cuva vrijednosti unosa u lokalnom stanju. Forma i `FilterBar` koriste istu komponentu `CategorySelect`, dok `TaskList` koristi `TaskCard` za svaku obavezu.
+
+`usePlanner` upravlja obavezama i filterima te koristi funkcije iz `taskModel.js` za izracun vidljive liste i statistike. `taskStorage.js` ucitava i cuva obaveze u `localStorageu`, a demonstracijski podaci nalaze se u `demoTasks.js`. Komponente dobijaju podatke i funkcije kroz props, bez direktnog pristupa pohrani.
+
+Testovi filtriranja i pohrane pokrecu se komandom `npm test` iz foldera `react/`.
 
 ## Poredjenje
 
